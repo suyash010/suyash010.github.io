@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Handmade Bags Store</title>
+ <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Razorpay Checkout Script -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      background: #faf6f2;
+      color: #222;
+    }
+    header {
+      background: #7e4a35;
+      color: #fff;
+      padding: 24px 0 18px 0;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+    }
+    .cart-btn {
+      background: #fff;
+      color: #7e4a35;
+      border: none;
+      font-weight: bold;
+      padding: 10px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-top: 10px;
+      float: right;
+      margin-right: 30px;
+      transition: background 0.2s;
+    }
+    .cart-btn:hover {
+      background: #f1c5a1;
+    }
+    main {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 16px;
+    }
+    .product-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      justify-content: center;
+    }
+    .product-item {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      width: 220px;
+      padding: 20px 12px 18px 12px;
+      text-align: center;
+      transition: transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .product-item:hover {
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 4px 18px rgba(126,74,53,0.13);
+    }
+    .product-item img {
+      width: 170px;
+      height: 170px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: #f5e8e1;
+    }
+    .product-item h3 {
+      margin: 8px 0 6px 0;
+      font-size: 1.1rem;
+      color: #7e4a35;
+    }
+    .product-item p {
+      margin: 0 0 12px 0;
+      color: #444;
+      font-weight: bold;
+    }
+    .product-item button {
+      margin: 3px 2px;
+      padding: 9px 16px;
+      border: none;
+      border-radius: 18px;
+      background: #f1c5a1;
+      color: #7e4a35;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 1rem;
+    }
+    .product-item button:hover {
+      background: #7e4a35;
+      color: #fff;
+    }
+    /* Cart Modal */
+    #cartModal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.45);
+      justify-content: center;
+      align-items: center;
+    }
+    #cartModal .modal-content {
+      background: #fff;
+      padding: 30px 24px 20px 24px;
+      border-radius: 14px;
+      max-width: 400px;
+      width: 95%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    #cartModal h2 {
+      margin-top: 0;
+      color: #7e4a35;
+    }
+    #cartItems {
+      margin-bottom: 15px;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #f1c5a1;
+      padding-bottom: 5px;
+    }
+    .cart-item button {
+      background: #f1c5a1;
+      color: #7e4a35;
+      border: none;
+      border-radius: 10px;
+      padding: 4px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .cart-item button:hover {
+      background: #7e4a35;
+      color: #fff;
+    }
+    #closeCart {
+      position: absolute;
+      top: 10px; right: 18px;
+      font-size: 1.3rem;
+      background: none;
+      border: none;
+      color: #7e4a35;
+      cursor: pointer;
+    }
+    @media (max-width: 700px) {
+      .product-item {
+        width: 98vw;
+        max-width: 340px;
+      }
+      .product-item img {
+        width: 90vw;
+        max-width: 200px;
+        height: 150px;
+      }
+    }
+    /* Prevent background scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Handmade Bags Store</h1>
+    <button class="cart-btn" onclick="showCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
+  </header>
+  <main>
+    <div class="product-list" id="productList"></div>
+  </main>
+  <footer style="text-align:center; padding:20px 0 10px 0; color:#7e4a35; font-size:1rem;">
+    &copy; 2025 Handmade Bags Store. All rights reserved.
+  </footer>
+
+  <!-- Cart Modal -->
+  <div id="cartModal">
+    <div class="modal-content">
+      <button id="closeCart" onclick="hideCart()">&times;</button>
+      <h2>Your Cart</h2>
+      <div id="cartItems"></div>
+      <div id="cartTotal" style="font-weight:bold; margin-bottom:18px;"></div>
+      <button onclick="checkoutCart()" style="background:#7e4a35; color:#fff; width:100%; margin-top:10px; font-size:1.1rem;">Checkout</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Product Data ---
+const bagImages = [
+  "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=400&q=80", // Handmade jute bag
+  "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80", // Woven bag
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80", // Straw bag
+  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80", // Handcrafted bag
+  "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=400&q=80", // Artisan bag
+  "https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=400&q=80", // Woven tote
+  "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&w=400&q=80",   // Handmade fabric bag
+  "https://images.pexels.com/photos/1488463/pexels-photo-1488463.jpeg?auto=compress&w=400&q=80",   // Crochet bag
+  "https://images.pexels.com/photos/934070/pexels-photo-934070.jpeg?auto=compress&w=400&q=80",     // Handcrafted purse
+  "https://images.pexels.com/photos/322207/pexels-photo-322207.jpeg?auto=compress&w=400&q=80"      // Straw/wicker bag
+];
+
+const products = [];
+for(let i=1; i<=50; i++) {
+  products.push({
+    id: i,
+    name: `Handmade Bag Style ${i}`,
+    price: 21 + (i % 10), // Vary price a bit for demo
+    image: bagImages[(i-1) % bagImages.length]
+  });
+}
+
+// --- Render Products ---
+    const productList = document.getElementById('productList');
+    products.forEach(product => {
+      const div = document.createElement('div');
+      div.className = 'product-item';
+      div.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" onerror="this.src='https://placehold.co/200x200?text=Bag+${product.id}'">
+        <h3>${product.name}</h3>
+        <p>Price: ₹${product.price * 100}</p>
+        <button onclick="addToCart(${product.id})">Add to Cart</button>
+        <button onclick="buyNow(${product.id})">Buy Now</button>
+      `;
+      productList.appendChild(div);
+    });
+
+    // --- Cart Logic ---
+    let cart = [];
+    function addToCart(id) {
+      const found = cart.find(item => item.id === id);
+      if (found) {
+        found.qty++;
+      } else {
+        cart.push({ id, qty: 1 });
+      }
+      updateCartCount();
+      alert('Added to cart!');
+    }
+    function updateCartCount() {
+      document.getElementById('cartCount').textContent = cart.reduce((a, b) => a + b.qty, 0);
+    }
+    function showCart() {
+      renderCart();
+      document.getElementById('cartModal').style.display = 'flex';
+      document.body.classList.add('modal-open'); // Prevent background scroll
+    }
+    function hideCart() {
+      document.getElementById('cartModal').style.display = 'none';
+      document.body.classList.remove('modal-open'); // Restore scroll
+    }
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      renderCart();
+      updateCartCount();
+    }
+    function renderCart() {
+      const cartItemsDiv = document.getElementById('cartItems');
+      cartItemsDiv.innerHTML = '';
+      let total = 0;
+      if (cart.length === 0) {
+        cartItemsDiv.innerHTML = '<p>Your cart is empty.</p>';
+        document.getElementById('cartTotal').textContent = '';
+        return;
+      }
+      cart.forEach(item => {
+        const product = products.find(p => p.id === item.id);
+        total += product.price * 100 * item.qty;
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <span>${product.name} × ${item.qty}</span>
+          <span>₹${product.price * 100 * item.qty}</span>
+          <button onclick="removeFromCart(${item.id})">Remove</button>
+        `;
+        cartItemsDiv.appendChild(div);
+      });
+      document.getElementById('cartTotal').textContent = 'Total: ₹' + total;
+    }
+    function checkoutCart() {
+      if (cart.length === 0) return;
+      // For demo: just buy the first item in cart (or sum all)
+      let total = 0;
+      let desc = '';
+      cart.forEach(item => {
+        const product = products.find(p => p.id === item.id);
+        total += product.price * 100 * item.qty;
+        desc += `${product.name} x${item.qty}, `;
+      });
+      initiatePayment(total, desc);
+    }
+
+    // --- Buy Now ---
+    function buyNow(id) {
+      const product = products.find(p => p.id === id);
+      initiatePayment(product.price * 100, product.name);
+    }
+
+    // --- Razorpay Integration ---
+    function initiatePayment(amount, description) {
+      const options = {
+        "key": "YOUR_RAZORPAY_KEY_ID", // Replace with your Razorpay Key ID
+        "amount": amount * 100, // Amount in paise
+        "currency": "INR",
+        "name": "Handmade Bags Store",
+        "description": description,
+        "image": "https://placehold.co/80x80?text=Bag",
+        "handler": function (response){
+          alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+          cart = [];
+          updateCartCount();
+          hideCart();
+        },
+        "prefill": {
+          "name": "",
+          "email": "",
+          "contact": ""
+        },
+        "theme": {
+          "color": "#7e4a35"
+        }
+      };
+      const rzp1 = new Razorpay(options);
+      rzp1.open();
+    }
+
+    // --- Modal Close on Outside Click ---
+    window.onclick = function(event) {
+      const modal = document.getElementById('cartModal');
+      if (event.target === modal) {
+        hideCart();
+      }
+    }
+  </script>
+</body>
+</html>
